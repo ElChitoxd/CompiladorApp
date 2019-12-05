@@ -71,7 +71,7 @@ public class SintacticoSemanticoAntesDeAccionesSemanticas {
         if (cmp.be.preAnalisis.complex.equals(t)) {
             cmp.be.siguiente();
             
-            preAnalisis = cmp.be.preAnalisis.complex;            
+            preAnalisis = cmp.be.preAnalisis.complex;          
         } else {
             errorEmparejar( t, cmp.be.preAnalisis.lexema, cmp.be.preAnalisis.numLinea );
         }
@@ -121,6 +121,7 @@ public class SintacticoSemanticoAntesDeAccionesSemanticas {
     //--------------------------------------------------------------------------
     // * * *   AQUI EMPIEZA  EL CODIGO DE LOS PROCEDURES    * * *
     //Autor: Alonso
+    
     private void Clase () {
         /*
         Clase -> public class id {

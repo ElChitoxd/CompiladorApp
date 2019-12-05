@@ -26,6 +26,7 @@
 package compilador;
 
 import java.util.Stack;
+import java.util.regex.Pattern;
 
 
 public class GenCodigoInt {
@@ -37,7 +38,7 @@ public class GenCodigoInt {
     private int        consecutivoEtiq;  
     private String     preAnalisis;
     private boolean    retroceder;
-    private int        p;
+    private String       p;
     
     
     //--------------------------------------------------------------------------
@@ -52,9 +53,9 @@ public class GenCodigoInt {
 	
     public void generar () {
         pilaC3D = new Stack();
-        pilaC3D = new Stack();
         preAnalisis = cmp.be.preAnalisis.complex;
         consecTemp = 1;
+        Clase ();
     }
     
     //--------------------------------------------------------------------------
@@ -145,7 +146,7 @@ public class GenCodigoInt {
                 return;
             }
             emparejar ( ";" );
-            Declaraciones ();  
+            Declaraciones ();
         }else {
             //Declaraciones -> empty
         }
@@ -323,11 +324,22 @@ public class GenCodigoInt {
     }
     
     private void Proposicion () {
+        Linea_BE id = new Linea_BE();
         if ( preAnalisis.equals( "id" ) ){
             //Proposicion -> id  Proposicion2 ;
+            id = cmp.be.preAnalisis;
             emparejar ( "id" );
             Proposicion2 ();
+            //Accion Semantica
+            vaciarPila();
+            if(!pilaC3D.empty())
+                emite(id.lexema+" = "+pilaC3D.pop());
+            //Fin Accion Semantica
             emparejar ( ";" );
+            //Accion Semantica
+            
+            //fin accion semantica
+            
         }else if( preAnalisis.equals( "{" ) ){
             //Proposicion -> Proposicion_compuesta
             Proposicion_compuesta ();
@@ -337,6 +349,12 @@ public class GenCodigoInt {
             emparejar ( "("    );
             Expresion ();
             emparejar ( ")"    );
+            //Accion Semantica 7
+            String op2 = pilaC3D.pop().toString();
+            String opr = pilaC3D.pop().toString();
+            String op1 = pilaC3D.pop().toString();
+            emite ("if "+op1+" "+opr+" "+op2);
+            //Fin Accion Semantica
             Proposicion ();
             emparejar ( "else" );
             Proposicion ();
@@ -360,7 +378,7 @@ public class GenCodigoInt {
             emparejar ( "opasig" );
             Expresion ();
         }else if ( preAnalisis.equals( "opasig" ) ){
-            //Proposicion2 -> opasig Expresión 
+            //Proposicion2 -> opasig Expresión
             emparejar ( "opasig" );
             Expresion ();
         }else if ( preAnalisis.equals( "(" ) ){
@@ -420,10 +438,18 @@ public class GenCodigoInt {
     }
     
     private void Expresion2() {
+        Linea_BE oprel = new Linea_BE();
         if ( preAnalisis.equals( "oprel" ) ) {
             //Expresion2 -> oprel Expresion_simple
+            oprel = cmp.be.preAnalisis;
             emparejar ( "oprel" );
+            
+            //Accion Semantica 9
+            vaciarPila();
+            pilaC3D.push(oprel.lexema);
+            //Fin Accion Semantica
             Expresion_simple ();
+            vaciarPila();
         }else {
             //Expresion2 -> empty
         }
@@ -440,9 +466,14 @@ public class GenCodigoInt {
     }
     
     private void Expresion_simple2 () {
+        Linea_BE opsuma = new Linea_BE();
         if ( preAnalisis.equals( "opsuma" ) ) {
             //Expresion_simple2 -> opsuma Termino Expresion2
+            opsuma = cmp.be.preAnalisis;
             emparejar ( "opsuma" );
+            //Accion Semantica 8
+            pilaC3D.push(opsuma.lexema);
+            //Fin Accion Semantica
             Termino ();
             Expresion_simple2 ();
         } else {
@@ -462,9 +493,14 @@ public class GenCodigoInt {
     }
     
     private void Termino2 (){
+        Linea_BE opmult = new Linea_BE();
         if ( preAnalisis.equals( "opmult" ) ) {
             //Termino2 -> opmult Factor Termino2
+            opmult = cmp.be.preAnalisis;
             emparejar ( "opmult" );
+            //Accion Semantica 7
+            pilaC3D.push(opmult.lexema);
+            //Fin Accion Semantica
             Factor();
             Termino2();
         } else {
@@ -473,27 +509,53 @@ public class GenCodigoInt {
     }
     
     private void Factor() {
+        Atributos Factor2 = new Atributos();
+        Linea_BE id = new Linea_BE();
+        Linea_BE num = new Linea_BE();
+        Linea_BE numnum = new Linea_BE();
+        Linea_BE par = new Linea_BE();
         if ( preAnalisis.equals( "id" ) ){
             //Factor -> id
+            id = cmp.be.preAnalisis;
             emparejar ( "id" );
-            Factor2 ();
+            Factor2 (Factor2);
+            //Accion Semantica 2
+            if (Factor2.Lugar.equals("empty"))
+                pilaC3D.push(id.lexema);
+            //Fin Accion Semantica
         } else if ( preAnalisis.equals( "num" ) ){
             //Factor -> num
+            num = cmp.be.preAnalisis;
             emparejar ( "num" );
+            //Accion Semantica 3
+            pilaC3D.push(num.lexema);
+            //Fin Accion Semantica
         } else if ( preAnalisis.equals( "num.num" ) ){
             //Factor -> num.num
+            numnum = cmp.be.preAnalisis;
             emparejar ( "num.num" );
+            //Accion Semantica 4
+            pilaC3D.push(numnum.lexema);
+            //Fin Accion Semantica
         } else if ( preAnalisis.equals( "(" ) ){
             //Factor -> ( Expresion )
+            par = cmp.be.preAnalisis;
             emparejar ( "(" );
+            //Accion Semantica 5
+            pilaC3D.push(par.lexema);
+            //Fin Accion Semantica
             Expresion ();
+            par = cmp.be.preAnalisis;
             emparejar ( ")" );
+            //Accion Semantica 6
+            pilaC3D.push(par.lexema);
+            //Fin Accion Semantica
         } else {
             error ( "Se esperaba un termino" );
         }
     }
     
-    private void Factor2 (){
+    private void Factor2 ( Atributos Factor2 ){
         if ( preAnalisis.equals( "(" ) ){
             //Factor2 -> ( Lista_expresiones )
             emparejar ( "(" );
@@ -501,6 +563,9 @@ public class GenCodigoInt {
             emparejar ( ")" );
         }else {
             //Factor2 -> empty
+            //Accion semantica 1
+            Factor2.Lugar = "empty";
+            //fin Accion semantica
         }
     }
 
@@ -515,8 +580,10 @@ public class GenCodigoInt {
     
     //************EMPAREJAR**************//
     private void emparejar ( String t ) {
-	if (cmp.be.preAnalisis.complex.equals ( t ) )
+	if (cmp.be.preAnalisis.complex.equals ( t ) ){
 		cmp.be.siguiente ();
+                preAnalisis = cmp.be.preAnalisis.complex;   
+        }
 	else
 		errorEmparejar ( "Se esperaba " + t + " se encontró " +
                                  cmp.be.preAnalisis.lexema );
@@ -550,6 +617,81 @@ public class GenCodigoInt {
     // Fin de ErrorEmparejar
     //--------------------------------------------------------------------------
 	
+    
+    private void vaciarPila(){
+        String operando1,operando2,operador;
+        Stack aux  = new Stack ();
+        ordenarPila();
+        while(!pilaC3D.empty()){
+            if(pilaC3D.size()>2){
+                operando1 = pilaC3D.pop().toString();
+                if(pilaC3D.peek().toString().equals(">")||pilaC3D.peek().toString().equals(">=")||pilaC3D.peek().toString().equals("<")||pilaC3D.peek().toString().equals("<=")||pilaC3D.peek().toString().equals("!=")||pilaC3D.peek().toString().equals("==")){
+                pilaC3D.push(operando1);
+                return;
+            }
+                p = tempnuevo();
+                if(!(operando1.charAt(0)=='+')||!(operando1.charAt(0)=='*')){
+                    operando2 = pilaC3D.pop().toString();
+                    if(!(operando2.charAt(0)=='+')||!(operando2.charAt(0)=='*')){
+                        operador = pilaC3D.pop().toString();
+                        if(operador.charAt(0)=='+'||operador.charAt(0)=='*'){
+                            emite ( p +" = " + operando1 + operador + operando2);
+                            pilaC3D.push(p);
+                            while(!aux.empty())
+                                pilaC3D.push(aux.pop());
+                        }else{
+                        aux.push(operando1);
+                        pilaC3D.push(operando2);
+                        pilaC3D.push(operador);
+                    }
+                    }else{
+                        
+                    }
+                }else{
+                    
+                }
+                //pilaC3D.push(p);
+            }else{
+                operando1 = pilaC3D.pop().toString();
+                if(operando1.length()>1&&Character.getNumericValue(operando1.charAt(1))==consecTemp-1)
+                    break;
+                p=tempnuevo();
+                emite( p + " = " + operando1);
+            }
+        }
+        
+        pilaC3D.push(p);
+        /*if(!p.equals(""))
+            pilaC3D.push(p);*/
+    }
+    
+    private void ordenarPila(){
+        Stack temp = new Stack();
+        String aux;
+        int tamaño = pilaC3D.size();
+        for(int i=0;i<tamaño;i++){
+            if(!pilaC3D.empty()&&(pilaC3D.peek().toString().equals(">")||
+                    pilaC3D.peek().toString().equals(">=")||
+                    pilaC3D.peek().toString().equals("<") ||
+                    pilaC3D.peek().toString().equals("<=")||
+                    pilaC3D.peek().toString().equals("!=")||
+                    pilaC3D.peek().toString().equals("=="))){
+                //pilaC3D.push(aux);
+            }else{
+                aux = pilaC3D.pop().toString();
+                temp.push(aux);
+            }
+        }
+        temp = Infijo2Postfijo.Infijo2PosfijoTxt(temp);
+        tamaño = temp.size();
+        for (int i = 0; i <tamaño; i++) {
+            pilaC3D.push(temp.get(i));
+        }
+        
+        
+    }
+    
+    
     //--------------------------------------------------------------------------
     // Metodo para mostrar un error sintactico
  

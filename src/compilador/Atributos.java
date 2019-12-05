@@ -41,4 +41,19 @@ public class Atributos {
     String h      = "";
     String sin    = "";
     String length = "";
+    public String  Lugar;
+    public String  op;
+    public String  verdadera;
+    public String  falsa;
+    public String  comienzo;
+    public String  siguiente;
+    
+    public Atributos () {
+        Lugar     = "";
+        op        = "";
+        verdadera = "";
+        falsa     = "";
+        comienzo  = "";
+        siguiente = "";
+    }
 }
