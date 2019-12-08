@@ -314,16 +314,21 @@ public class GenCodigoInt {
     }
         
     private void Lista_proposiciones () {
+        Atributos Proposicion = new Atributos();
         if ( preAnalisis.equals( "id" ) || preAnalisis.equals( "{" ) ||
                 preAnalisis.equals( "if" ) || preAnalisis.equals( "while" ) ){
             //Lista_Proposiciones -> Proposición  ;  Lista_proposiciones
-            Proposicion ();
+            Proposicion (Proposicion);
             
             Lista_proposiciones ();
         }
     }
     
-    private void Proposicion () {
+    private void Proposicion (Atributos Proposicion) {
+        Atributos Proposicion1 = new Atributos();
+        Atributos Proposicion12 = new Atributos();
+        Atributos Expresion = new Atributos();
+        Atributos Proposicion2 = new Atributos();
         Linea_BE id = new Linea_BE();
         if ( preAnalisis.equals( "id" ) ){
             //Proposicion -> id  Proposicion2 ;
@@ -346,25 +351,56 @@ public class GenCodigoInt {
         }else if ( preAnalisis.equals( "if" ) ){
             //Proposicion -> if ( Expresión ) Proposición else Proposición  
             emparejar ( "if"   );
+            //Accion Semantica ##
+            Proposicion.siguiente = etiqnueva();
+            Expresion.verdadera = etiqnueva();
+            Expresion.falsa = etiqnueva();
+            //Fin Accion Semantica
             emparejar ( "("    );
             Expresion ();
             emparejar ( ")"    );
+            
             //Accion Semantica 7
             String op2 = pilaC3D.pop().toString();
             String opr = pilaC3D.pop().toString();
             String op1 = pilaC3D.pop().toString();
-            emite ("if "+op1+" "+opr+" "+op2);
+            emite ( "if "+op1+" "+opr+" "+op2+" goto "+Expresion.verdadera );
+            emite ( "goto "+Expresion.falsa );
+            emite ( Expresion.verdadera+" :" );
             //Fin Accion Semantica
-            Proposicion ();
+            Proposicion (Proposicion1);
+            //Accion Semantica ##
+            emite ( "goto "+Proposicion.siguiente );
+            //Fin Accion Semantica
             emparejar ( "else" );
-            Proposicion ();
+            emite ( Expresion.falsa+" :" );
+            Proposicion (Proposicion12);
+            emite ( Proposicion.siguiente+" :" );
         } else if(preAnalisis.equals( "while" ) ){
             //Proposicion -> while ( Expresión ) Proposición
             emparejar ( "while" );
+            //Accion Semantica ##
+            Proposicion.comienzo = etiqnueva();
+            Proposicion.siguiente = etiqnueva();
+            Expresion.verdadera = etiqnueva();
+            Expresion.falsa = Proposicion.siguiente;
+            emite (Proposicion.comienzo+" :");
+            //Fin Accion Semantica
             emparejar ( "("     );
             Expresion ();
             emparejar ( ")"     );
-            Proposicion ();
+            //Accion Semantica
+            String op2 = pilaC3D.pop().toString();
+            String opr = pilaC3D.pop().toString();
+            String op1 = pilaC3D.pop().toString();
+            emite ("if "+op1+" "+opr+" "+op2+" goto "+Expresion.verdadera);
+            emite ("goto "+Expresion.falsa);
+            emite (Expresion.verdadera + " : ");
+            //Fin Accion Semantica
+            Proposicion (Proposicion1);
+            emite ("goto "+Proposicion.comienzo);
+            emite (Expresion.falsa+" :");
+            
         } else {
             error ( "Preposicion no válida" );
         }
